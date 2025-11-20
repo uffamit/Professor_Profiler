@@ -1,0 +1,2 @@
+class CallbackContext:
+    pass
