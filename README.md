@@ -1,6 +1,6 @@
 # Professor Profiler 🎓
 
-[![Python](https://img.shields.io/badge/Python-3.13%2B-blue?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.5%20Pro-8E44AD?style=flat&logo=google&logoColor=white)](https://ai.google.dev/)
 [![Architecture](https://img.shields.io/badge/Architecture-Hub%20%26%20Spoke-orange?style=flat)](https://github.com/uffamit/Professor_Profiler)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
