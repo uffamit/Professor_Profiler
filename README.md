@@ -1,464 +1,330 @@
 # Professor Profiler 🎓
 
+[![Python](https://img.shields.io/badge/Python-3.13%2B-blue?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.5%20Pro-8E44AD?style=flat&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Architecture](https://img.shields.io/badge/Architecture-Hub%20%26%20Spoke-orange?style=flat)](https://github.com/uffamit/Professor_Profiler)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
 [![Quality Assurance Pipeline](https://github.com/uffamit/Professor_Profiler/actions/workflows/quality-assurance.yml/badge.svg)](https://github.com/uffamit/Professor_Profiler/actions/workflows/quality-assurance.yml)
+[![Status](https://img.shields.io/badge/Status-Production--Ready-brightgreen?style=flat)](https://github.com/uffamit/Professor_Profiler)
 
-A production-ready **multi-agent system** powered by **Google Gemini API** that analyzes exam papers to identify trends, classify questions, and generate personalized study recommendations.
+> **An advanced multi-agent system that reverse-engineers exam papers to decode professor psychology and generate optimized study strategies.**
 
-> **🚀 New to this project?** Start here: [**GETTING_STARTED.md**](GETTING_STARTED.md)  
-> **⚡ Quick Start (5 min):** [**QUICKSTART.md**](QUICKSTART.md)
+---
 
-## 🌟 Key Features
+## 📖 Overview
 
-This project demonstrates **8+ key AI agent concepts** required for advanced agent systems:
+**Professor Profiler** is not just a document reader; it is a **Hierarchical Multi-Agent System (HMAS)** designed to mimic the cognitive process of an expert tutor. By orchestrating specialized AI agents powered by **Google Gemini 2.5**, it ingests raw exam PDFs, breaks them down into cognitive components (Bloom's Taxonomy), identifies statistical patterns, and formulates actionable "Safe Zone" and "Hit List" study plans.
 
-### ✅ 1. Multi-Agent System
-- **Hub-and-Spoke Architecture**: Root orchestrator + 3 specialized sub-agents
-- **Sequential Execution**: Taxonomist → Trend Spotter → Strategist workflow
-- **Agent Delegation**: Root agent delegates specialized tasks to sub-agents
-- **Parallel Processing**: Batch question classification (ready for parallel execution)
+This project serves as a reference implementation for:
+*   **Hub-and-Spoke Agent Architecture**
+*   **Model Context Protocol (MCP) Tooling**
+*   **Long-term Memory Management (RAG-lite)**
+*   **Production-grade Observability (Tracing & Metrics)**
 
-### ✅ 2. Custom Tools & MCP Integration
-- **PDF Reading Tool**: Extract text from exam papers using pypdf
-- **Statistics Analysis Tool**: Compute frequency distributions and cognitive complexity
-- **Visualization Tool**: Generate charts using matplotlib
-- **Comparison Tool**: Analyze multiple exams for trends
-- **MCP-Ready**: Extensible tool framework using FunctionTool wrapper
+---
 
-### ✅ 3. Sessions & Memory Management
-- **InMemorySessionService**: Persistent conversation state across interactions
-- **Memory Bank**: Long-term storage for:
-  - Historical exam analyses
-  - Student preferences
-  - Previous study plans
-- **Context Compaction**: Smart summarization to manage token limits
+## 🏗️ System Architecture
 
-### ✅ 4. Observability
-- **Structured Logging**: JSON logs with correlation IDs
-- **Distributed Tracing**: Request flow tracking through agent hierarchy
-- **Metrics Collection**: Performance counters for:
-  - Agent execution time
-  - Tool usage
-  - Token consumption
-  - Success/error rates
+The system creates a directed acyclic graph (DAG) of agent execution, managed by a central orchestrator.
 
-### ✅ 5. Gemini API Integration
-- **Real LLM Calls**: Full integration with Google Gemini 2.5
-- **Tool Calling**: Native Gemini function calling support
-- **Streaming Responses**: Async event-based execution
-- **Model Selection**: Flash for classification, Pro for analysis
+### High-Level Design
 
-##  Architecture
+```mermaid
+flowchart TD
+    subgraph External_Layer ["🔌 External Layer"]
+        User([User / Client])
+        PDF_File[Exam PDF]
+    end
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│                     USER QUERY                                 │
-└──────────────────┬─────────────────────────────────────────────┘
-                   │
-                   ▼
-         ┌─────────────────┐
-         │   Runner        │  ◄── Session Service (Memory)
-         │  (Orchestrator) │
-         └────────┬────────┘
-                  │
-                  ▼
-    ┌─────────────────────────┐
-    │ professor_profiler_agent │ ◄── Root Agent (Gemini 2.5 Pro)
-    │ (Hub)                    │
-    └───────┬──────────────────┘
-            │
-            ├─── Tools: read_pdf, analyze_stats, visualize, compare
-            │
-            ├─── Sub-Agent 1: taxonomist (Flash)
-            │    └─── Classifies questions by topic & Bloom's level
-            │
-            ├─── Sub-Agent 2: trend_spotter (Pro)
-            │    └─── Analyzes statistical shifts in exam patterns
-            │
-            └─── Sub-Agent 3: strategist (Pro)
-                 └─── Generates actionable study plans
+    subgraph Orchestration_Layer ["🧠 Orchestration Layer"]
+        Runner[<b>Runner</b><br><i>State Management</i>]
+        Memory[(<b>Memory Bank</b><br><i>JSON Persistence</i>)]
+        Session[<b>Session Service</b>]
+    end
+
+    subgraph Agent_Layer ["🤖 Agent Hierarchy"]
+        Root[<b>ROOT AGENT</b><br><i>Gemini 2.5 Pro</i><br>The Project Manager]
+        
+        subgraph Workers ["Specialized Sub-Agents"]
+            Taxonomist[<b>Taxonomist</b><br><i>Gemini Flash</i><br>Topic & Bloom's Classification]
+            Trend[<b>Trend Spotter</b><br><i>Gemini Pro</i><br>Statistical Analysis]
+            Strat[<b>Strategist</b><br><i>Gemini Thinking</i><br>Study Planning]
+        end
+    end
+
+    subgraph Tool_Layer ["🛠️ Tool Layer"]
+        Reader[PDF Ingestion]
+        Plotter[Matplotlib Viz]
+        Calc[Stats Engine]
+    end
+
+    User --> Runner
+    PDF_File --> Reader
+    Runner <--> Session
+    Runner <--> Memory
+    Runner --> Root
+    
+    Root --Delegates--> Taxonomist
+    Root --Delegates--> Trend
+    Root --Delegates--> Strat
+    
+    Root --Calls--> Reader
+    Root --Calls--> Plotter
+    Trend --Calls--> Calc
 ```
 
-## 🚀 Quick Start
+### Execution Pipeline
+
+The following sequence illustrates how a raw PDF is transformed into a study plan.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Student
+    participant Root as 🧠 Root Agent
+    participant Tool as 🛠️ Tools
+    participant Tax as 🏷️ Taxonomist
+    participant Strat as 🎯 Strategist
+
+    Student->>Root: "Analyze Physics_2024.pdf"
+    
+    rect rgb(240, 248, 255)
+    note right of Root: Phase 1: Ingestion
+    Root->>Tool: Call read_pdf("Physics_2024.pdf")
+    Tool-->>Root: Returns Raw Text Content
+    end
+
+    rect rgb(255, 250, 240)
+    note right of Root: Phase 2: Classification
+    Root->>Tax: "Classify these questions by difficulty"
+    Tax->>Tax: Map to Bloom's Taxonomy
+    Tax-->>Root: JSON List of Classified Questions
+    end
+
+    rect rgb(240, 255, 240)
+    note right of Root: Phase 3: Visualization
+    Root->>Tool: Call generate_charts(data)
+    Tool-->>Root: Returns path/to/chart.png
+    end
+
+    rect rgb(255, 240, 245)
+    note right of Root: Phase 4: Strategy
+    Root->>Strat: "Based on this data, what should I study?"
+    Strat->>Strat: Identify Safe Zones & Drop Lists
+    Strat-->>Root: Final Study Recommendations
+    end
+
+    Root-->>Student: Final Report + Images + Plan
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Component | Technology | Description |
+| :--- | :--- | :--- |
+| **Core Logic** | Python 3.10+ | Type-hinted, async-native codebase. |
+| **LLM Engine** | Google Gemini 2.5 | Uses `Pro` for reasoning and `Flash` for high-speed tasks. |
+| **Orchestrator** | Google ADK (Custom) | Custom implementation of the Agent Development Kit patterns. |
+| **Document Processing** | `pypdf` | Robust text extraction from standardized exam papers. |
+| **Visualization** | `matplotlib` | Generates distribution bar charts and pie charts on the fly. |
+| **Observability** | `logging` + `uuid` | Distributed tracing with correlation IDs for debugging. |
+| **Configuration** | `pydantic` | Environment variable validation and typed configuration. |
+
+---
+
+## 🤖 Agent Personas
+
+The system is composed of three distinct "personalities" to ensure high-quality output:
+
+### 1. The Taxonomist (Classifier)
+*   **Model:** `gemini-2.0-flash-exp` (Optimized for speed/cost)
+*   **Role:** The meticulous grader. It reads every question and tags it with:
+    *   **Topic:** (e.g., "Thermodynamics", "Linear Algebra")
+    *   **Bloom's Level:** (Remember, Understand, Apply, Analyze, Evaluate, Create)
+    *   **Marks:** The weight of the question.
+
+### 2. The Trend Spotter (Analyst)
+*   **Model:** `gemini-2.0-pro-exp` (Optimized for context window)
+*   **Role:** The data scientist. It looks at the classified data to find:
+    *   Topic frequency distribution.
+    *   Difficulty spikes compared to previous years.
+    *   "Curveball" questions that deviate from the norm.
+
+### 3. The Strategist (Coach)
+*   **Model:** `gemini-2.0-flash-thinking-exp-01-21` (Reasoning enabled)
+*   **Role:** The academic coach. It takes the analysis and outputs:
+    *   **✅ Safe Zone:** Topics you must master (High reward, Low effort).
+    *   **⚠️ Danger Zone:** Topics that are high difficulty and appear frequently.
+    *   **🗑️ Drop List:** Low-value topics you can safely skip if short on time.
+
+---
+### Inter-Agent Communication Flow
+
+This diagram illustrates the data hand-offs. Notice how the **Root Agent** aggregates the outputs from one agent before passing them as context to the next.
+
+```mermaid
+graph TD
+    %% Nodes
+    User([User])
+    Root[<b>ROOT AGENT</b><br><i>Orchestrator</i>]
+    Tax[<b>Taxonomist</b><br><i>Classifier</i>]
+    Trend[<b>Trend Spotter</b><br><i>Analyst</i>]
+    Strat[<b>Strategist</b><br><i>Planner</i>]
+
+    %% Flow
+    User -- "Analyze this PDF" --> Root
+    
+    %% Step 1
+    Root -- "1. DELEGATE: <br>Extract topics & difficulty from raw text" --> Tax
+    Tax -- "2. RETURN: <br>JSON List (Question, Topic, Blooms_Level)" --> Root
+    
+    %% Step 2
+    Root -- "3. DELEGATE: <br>Analyze this JSON data for patterns" --> Trend
+    Trend -- "4. RETURN: <br>Statistical Insights (e.g., '80% Calculus')" --> Root
+    
+    %% Step 3
+    Root -- "5. DELEGATE: <br>Create study plan based on these insights" --> Strat
+    Strat -- "6. RETURN: <br>Action Plan (Safe Zones / Hit List)" --> Root
+    
+    %% Final
+    Root -- "7. Synthesized Report" --> User
+
+    %% Styling to differentiate flows
+    linkStyle 1,3,5 stroke:#E67E22,stroke-width:2px;
+    linkStyle 2,4,6 stroke:#2ECC71,stroke-width:2px,stroke-dasharray: 5 5;
+```
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-
-- Python 3.10+
-- Google AI API Key ([Get one here](https://makersuite.google.com/app/apikey))
+1.  **Python 3.10** or higher installed.
+2.  A **Google Cloud Project** or **AI Studio** account.
+3.  An API Key from [Google AI Studio](https://aistudio.google.com/).
 
 ### Installation
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/uffamit/Professor_Profiler.git
 cd Professor_Profiler
 
-# Create virtual environment
+# 2. Create a virtual environment (Recommended)
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
-
-# Set up your API key
-export GOOGLE_API_KEY="your_gemini_api_key_here"
 ```
 
-### 📁 Folder Structure
+### Configuration
 
-The project uses a clear input/output folder structure:
-
-```
-Professor_Profiler/
-├── input/           # 📥 Place your exam PDF files here
-├── output/          # 📤 All results are saved here
-│   ├── charts/      #    └─ Visualization charts (PNG files)
-│   ├── logs/        #    └─ Log files
-│   └── reports/     #    └─ Analysis reports
-├── profiler_agent/  # Agent source code
-├── tests/           # Test files
-└── demo.py          # Demo script
-```
-
-**Workflow:**
-1. **Place exam PDFs** in the `input/` folder
-2. **Run the agent** (demo.py or your own script)
-3. **Find results** in the `output/` folder
-
-### Running Your First Analysis
+Create a `.env` file or export variables in your shell:
 
 ```bash
-# Step 1: Add your exam PDF to input folder
-cp your_exam.pdf input/
+# Required: Your Gemini API Key
+export GOOGLE_API_KEY="AIzaSy..."
 
-# Step 2: Run the demo
-python demo.py
-
-# Step 3: Check results in output folder
-ls output/charts/     # View generated charts
-cat output/logs/demo_run.log  # View execution logs
-cat output/memory_bank.json   # View stored memories
+# Optional: Switch to Vertex AI (Enterprise)
+# export GOOGLE_GENAI_USE_VERTEXAI="True"
+# export GOOGLE_CLOUD_PROJECT="my-gcp-project"
+# export GOOGLE_CLOUD_LOCATION="us-central1"
 ```
-
-### Running Tests
-
-```bash
-# Run integration tests
-python tests/test_agent.py
-
-# Or use pytest
-pytest tests/
-```
-
-## 📋 Usage Examples
-
-### Basic Usage (with input/output folders)
-
-```python
-import asyncio
-from google.adk.runners import Runner
-from google.adk.sessions import InMemorySessionService
-from profiler_agent.agent import root_agent
-from profiler_agent.paths import list_input_files
-from google.genai import types as genai_types
-
-async def analyze_exam():
-    # Initialize session service
-    session_service = InMemorySessionService()
-    await session_service.create_session(
-        app_name="professor_profiler",
-        user_id="student_123",
-        session_id="session_001"
-    )
-    
-    # Create runner
-    runner = Runner(
-        agent=root_agent,
-        app_name="professor_profiler",
-        session_service=session_service
-    )
-    
-    # List available exams in input/ folder
-    exams = list_input_files()
-    print(f"Found {len(exams)} exam(s): {[e.name for e in exams]}")
-    
-    # Run analysis (agent will look for PDF in input/ folder)
-    query = "Analyze physics_2024.pdf and tell me what to study"
-    
-    async for event in runner.run_async(
-        user_id="student_123",
-        session_id="session_001",
-        new_message=genai_types.Content(
-            role="user",
-            parts=[genai_types.Part.from_text(text=query)]
-        )
-    ):
-        if event.is_final_response():
-            print(event.content.parts[0].text)
-            # Results automatically saved to output/ folder
-
-asyncio.run(analyze_exam())
-```
-
-### Using Memory Bank (saves to output/ folder)
-
-```python
-from profiler_agent.memory import MemoryBank
-
-memory_bank = MemoryBank()
-
-# Store exam analysis
-memory_bank.add_memory(
-    user_id="student_123",
-    memory_type="exam_analysis",
-    content={
-        "exam": "Physics Midterm 2024",
-        "topics": ["Quantum Mechanics", "Electromagnetism"],
-        "difficulty": "high"
-    },
-    tags=["physics", "2024"]
-)
-
-# Retrieve memories
-memories = memory_bank.get_memories("student_123", memory_type="exam_analysis")
-
-# Search memories
-results = memory_bank.search_memories("student_123", "quantum")
-
-# Get compacted context for LLM
-context = memory_bank.compact_context("student_123", max_tokens=500)
-```
-
-### Using Observability
-
-```python
-from profiler_agent.observability import setup_logging, metrics, tracer
-
-# Setup structured logging
-logger = setup_logging(level="INFO", structured=True)
-
-# Start trace
-trace_id = tracer.start_trace("exam_analysis", metadata={"user": "student_123"})
-
-# Record metrics
-metrics.increment("exams.analyzed")
-metrics.histogram("processing.duration_ms", 1500.5)
-
-# End trace
-trace_data = tracer.end_trace(trace_id)
-
-# Get all metrics
-all_metrics = metrics.get_metrics()
-```
-
-## 🏗️ Project Structure
-
-```
-Professor_Profiler/
-├── google/adk/                  # Custom ADK framework
-│   ├── agents/
-│   │   ├── agent.py            # Agent implementation with Gemini integration
-│   │   └── callback_context.py # Callback context for post-processing
-│   ├── runners/
-│   │   └── runner.py           # Agent execution runner
-│   ├── sessions/
-│   │   └── in_memory_session_service.py  # Session state management
-│   └── tools/
-│       └── function_tool.py    # Function tool wrapper
-│
-├── profiler_agent/             # Main agent application
-│   ├── agent.py               # Root agent definition
-│   ├── config.py              # Configuration management
-│   ├── tools.py               # Custom tools (PDF, stats, viz)
-│   ├── memory.py              # Memory bank implementation
-│   ├── observability.py       # Logging, tracing, metrics
-│   ├── agent_utils.py         # Utility functions
-│   └── sub_agents/            # Specialized sub-agents
-│       ├── taxonomist.py      # Question classification
-│       ├── trend_spotter.py   # Trend analysis
-│       └── strategist.py      # Study plan generation
-│
-├── tests/
-│   ├── test_agent.py          # Integration tests
-│   └── sample_data/           # Test data
-│
-├── demo.py                    # Comprehensive demo script
-├── requirements.txt           # Python dependencies
-├── ARCHITECTURE.md            # Detailed architecture documentation
-└── README.md                  # This file
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-```bash
-# Required: Google AI API Key
-export GOOGLE_API_KEY="your_api_key"
-
-# Optional: For Vertex AI
-export GOOGLE_CLOUD_PROJECT="your_project_id"
-export GOOGLE_CLOUD_LOCATION="global"
-export GOOGLE_GENAI_USE_VERTEXAI="False"  # Set to "True" for Vertex AI
-```
-
-### Model Configuration
-
-Edit `profiler_agent/config.py` to customize models:
-
-```python
-@dataclass
-class ProfilerConfiguration:
-    classifier_model: str = "gemini-2.0-flash-exp"  # Fast for classification
-    analyzer_model: str = "gemini-2.0-flash-thinking-exp-01-21"      # Detailed for analysis
-```
-
-## 📊 Agent Capabilities
-
-### Taxonomist (Sub-Agent 1)
-- **Purpose**: Classify questions by topic and cognitive level
-- **Model**: gemini-2.0-flash-exp (optimized for speed)
-- **Output**: Tagged questions with topics and Bloom's taxonomy levels
-- **Bloom's Levels**: Remember, Understand, Apply, Analyze, Evaluate, Create
-
-### Trend Spotter (Sub-Agent 2)
-- **Purpose**: Identify statistical patterns across exams
-- **Model**: gemini-2.0-flash-thinking-exp-01-21 (deep analysis)
-- **Output**: Shift report showing:
-  - Frequency shifts (topics appearing more/less)
-  - Cognitive shifts (difficulty level changes)
-  - Emerging patterns
-
-### Strategist (Sub-Agent 3)
-- **Purpose**: Generate actionable study recommendations
-- **Model**: gemini-2.0-flash-thinking-exp-01-21
-- **Output**: Study plan with:
-  - **Hit List**: High-priority topics
-  - **Safe Zone**: Well-covered topics  
-  - **Drop List**: Low-value topics to skip
-
-## 🧪 Testing
-
-### Run All Tests
-
-```bash
-python tests/test_agent.py
-```
-
-### Run Demo
-
-```bash
-python demo.py
-```
-
-The demo showcases:
-1. Multi-agent system architecture
-2. Custom tools execution
-3. Observability features
-4. Memory bank operations
-5. Full agent workflow with mock or real API
-
-## 📈 Performance & Observability
-
-### Metrics Tracked
-
-- `exams.analyzed`: Counter of analyzed exams
-- `questions.classified`: Number of classified questions
-- `trends.identified`: Trends found per analysis
-- `agent.execution.duration_ms`: Agent execution time
-- `tool.invocation.count`: Tool usage statistics
-
-### Logging Levels
-
-- **INFO**: General operations (session creation, agent execution)
-- **DEBUG**: Detailed execution flow (message additions, context updates)
-- **WARNING**: Non-critical issues (missing API key, fallback behavior)
-- **ERROR**: Failures (API errors, tool failures)
-
-### Trace Data Structure
-
-```json
-{
-  "trace_id": "uuid-here",
-  "operation": "exam_analysis",
-  "total_duration_ms": 1543.2,
-  "spans": [
-    {"name": "pdf_ingestion", "duration_ms": 120.5},
-    {"name": "classification", "duration_ms": 450.2},
-    {"name": "trend_analysis", "duration_ms": 680.1},
-    {"name": "strategy_generation", "duration_ms": 292.4}
-  ]
-}
-```
-
-## 🛠️ Extending the System
-
-### Adding a New Tool
-
-```python
-from google.adk.tools import FunctionTool
-
-def my_custom_tool(param: str) -> dict:
-    """
-    Description of what the tool does.
-    
-    Args:
-        param: Parameter description
-    
-    Returns:
-        Dictionary with results
-    """
-    return {"result": "processed"}
-
-# Add to agent
-root_agent.tools.append(FunctionTool(func=my_custom_tool))
-```
-
-### Adding a New Sub-Agent
-
-```python
-from google.adk.agents import Agent
-from profiler_agent.config import config
-
-new_agent = Agent(
-    name="my_agent",
-    model=config.analyzer_model,
-    description="What this agent does",
-    instruction="Detailed instructions for the agent",
-    output_key="agent_output"
-)
-
-# Add to root agent
-root_agent.sub_agents.append(new_agent)
-```
-
-## 📝 License
-
-MIT License - See LICENSE file for details
-
-## 🤝 Contributing
-
-Contributions welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new features
-4. Submit a pull request
-
-## 📚 Additional Resources
-
-- [Google Gemini API Documentation](https://ai.google.dev/)
-- [Agent Development Kit (ADK) Concepts](./ARCHITECTURE.md)
-- [Bloom's Taxonomy Reference](https://cft.vanderbilt.edu/guides-sub-pages/blooms-taxonomy/)
-
-## 🎯 Roadmap
-
-- [ ] Add evaluation metrics for agent performance
-- [ ] Implement A2A (Agent-to-Agent) protocol
-- [ ] Cloud deployment configurations (Cloud Run, Functions)
-- [ ] Web interface with real-time updates
-- [ ] Support for more document formats (DOCX, images)
-- [ ] Vector database integration for semantic search
-- [ ] Multi-language support
 
 ---
 
-**Built with ❤️ using Google Gemini AI**
+## 💻 Usage
+
+### 1. The Input/Output Workflow
+The system relies on a file-system interface for processing documents.
+
+1.  **Drop PDF:** Place `Finals_2024.pdf` into the `input/` folder.
+2.  **Run Agent:** Execute the script.
+3.  **Get Result:** Check `output/reports/` for the text and `output/charts/` for images.
+
+### 2. Running the Demo
+The `demo.py` script runs a full simulation of the pipeline.
+
+```bash
+python demo.py
+```
+
+### 3. Custom Implementation
+Here is how to invoke the agent programmatically in your own application:
+
+```python
+import asyncio
+from google.genai import types
+from profiler_agent.agent import root_agent
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+
+async def main():
+    # Initialize memory
+    session = InMemorySessionService()
+    
+    # Initialize runner
+    runner = Runner(agent=root_agent, session_service=session)
+    
+    # Define the user task
+    user_msg = "Analyze the chemistry_midterm.pdf file in the input folder."
+    
+    # Execute
+    print("🤖 Agent is thinking...")
+    async for event in runner.run_async(
+        user_id="prof_user",
+        session_id="sess_01",
+        new_message=types.Content(role="user", parts=[types.Part.from_text(user_msg)])
+    ):
+        if event.is_final_response():
+            print(f"\n🎓 Final Answer:\n{event.content.parts[0].text}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+---
+
+## 📂 Project Structure
+
+```text
+Professor_Profiler/
+├── input/                     # 📥 Place PDFs here for analysis
+├── output/                    # 📤 Generated artifacts
+│   ├── charts/                #    - Topic distribution graphs
+│   ├── logs/                  #    - Structured JSON logs
+│   └── reports/               #    - Markdown study guides
+├── google/adk/                # 🧱 ADK Framework Core
+│   ├── agents/                #    - Base Agent classes
+│   ├── runners/               #    - Execution logic
+│   └── tools/                 #    - Tool wrapping logic
+├── profiler_agent/            # 🧠 Application Logic
+│   ├── sub_agents/            #    - Taxonomist, Trend, Strategist
+│   ├── tools.py               #    - PDF & Math tools
+│   ├── config.py              #    - Model & Env settings
+│   └── observability.py       #    - Tracing implementation
+└── tests/                     # 🧪 Pytest suite
+```
+
+---
+
+## ❓ Troubleshooting
+
+| Issue | Cause | Solution |
+| :--- | :--- | :--- |
+| `403 Permission Denied` | Invalid API Key | Check `GOOGLE_API_KEY` in your environment variables. |
+| `FileNotFoundError` | PDF missing | Ensure your PDF is exactly in the `input/` folder and the filename matches your query. |
+| `ResourceExhausted` | API Quota hit | The `Thinking` model uses many tokens. Switch to `flash` in `config.py` for testing. |
+| `Empty Chart` | Matplotlib error | Ensure the agent found data. Check `output/logs/` for parsing errors. |
+
+---
+
+## 📜 License
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+
+---
+
+**Maintained by [uffamit](https://github.com/uffamit)** 
