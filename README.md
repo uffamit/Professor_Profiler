@@ -1,5 +1,7 @@
 # Professor Profiler 🎓
 
+[![Quality Assurance Pipeline](https://github.com/uffamit/Professor_Profiler/actions/workflows/quality-assurance.yml/badge.svg)](https://github.com/uffamit/Professor_Profiler/actions/workflows/quality-assurance.yml)
+
 A production-ready **multi-agent system** powered by **Google Gemini API** that analyzes exam papers to identify trends, classify questions, and generate personalized study recommendations.
 
 > **🚀 New to this project?** Start here: [**GETTING_STARTED.md**](GETTING_STARTED.md)  

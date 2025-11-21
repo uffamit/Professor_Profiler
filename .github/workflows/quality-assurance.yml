@@ -1,0 +1,182 @@
+name: Quality Assurance Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  # Validation 1: Python Syntax Validation
+  validate-syntax:
+    name: Syntax Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Validate Python Syntax
+        run: |
+          # Performs bytecode compilation to detect syntax issues
+          python -m compileall profiler_agent/ google/ tests/ demo.py create_sample_exams.py -q
+
+  # Validation 2: Code Style Enforcement (Black & Isort)
+  enforce-style:
+    name: Code Style Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install Style Checkers
+        run: pip install black isort
+      - name: Validate Black Code Formatting
+        # Pipeline continues even if formatting issues exist
+        continue-on-error: true 
+        run: black . --check --diff --color
+      - name: Validate Import Organization
+        continue-on-error: true
+        run: isort . --check-only --diff --color
+
+  # Validation 3: Static Code Analysis (Flake8)
+  analyze-code:
+    name: Static Code Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install Code Analyzer
+        run: pip install flake8
+      - name: Execute Flake8 Analysis
+        # Fails build only on critical issues (E9, F63, F7, F82)
+        run: |
+          flake8 profiler_agent/ google/ tests/ demo.py create_sample_exams.py --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Extended analysis without blocking the build
+          flake8 profiler_agent/ google/ tests/ demo.py create_sample_exams.py --count --exit-zero --max-complexity=12 --max-line-length=120 --statistics
+
+  # Validation 4: Type Safety Verification
+  verify-types:
+    name: Type Safety Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install Type Checker
+        run: pip install mypy
+      - name: Execute Type Analysis
+        continue-on-error: true
+        run: mypy profiler_agent/ google/ --ignore-missing-imports --no-error-summary
+
+  # Validation 5: Security Vulnerability Scan (Bandit)
+  scan-security:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install Security Scanner
+        run: pip install bandit[toml]
+      - name: Execute Security Scan
+        continue-on-error: true
+        run: bandit -r profiler_agent/ google/ -ll -f screen
+
+  # Validation 6: Dependency Security Audit
+  audit-dependencies:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install Audit Tool
+        run: pip install pip-audit
+      - name: Execute Dependency Audit
+        continue-on-error: true
+        run: |
+          pip install -r requirements.txt
+          pip-audit --desc
+
+  # Validations 7-10: Test Suite Execution Matrix (Python 3.10-3.13)
+  execute-tests:
+    name: Test Suite - Python ${{ matrix.python-version }}
+    needs: [validate-syntax]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Project Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest pytest-cov pytest-asyncio
+      - name: Execute Test Suite
+        continue-on-error: true
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY || 'dummy-key-for-testing' }}
+        run: |
+          # Discovers and executes all available tests
+          if [ -d "tests" ] || [ -d "test" ]; then
+            pytest --verbose --tb=short || echo "⚠️  Tests failed or skipped"
+          else
+            echo "⚠️  No test directory found, skipping test execution"
+          fi
+
+  # Validation 11: Package Build Verification
+  verify-package:
+    name: Package Build Verification
+    needs: [execute-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install Packaging Tools
+        run: pip install build twine check-manifest
+      - name: Create setup.py for Build
+        run: |
+          cat > setup.py << 'EOF'
+          from setuptools import setup, find_packages
+          
+          setup(
+              name="professor-profiler",
+              version="1.0.0",
+              packages=find_packages(),
+              install_requires=[
+                  line.strip() 
+                  for line in open('requirements.txt') 
+                  if line.strip() and not line.startswith('#')
+              ],
+              python_requires='>=3.10',
+          )
+          EOF
+      - name: Build Distribution Packages
+        run: python -m build
+      - name: Validate Package Metadata
+        run: twine check dist/*

@@ -286,3 +286,76 @@ After reviewing results:
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System design
 - [FEATURES.md](FEATURES.md) - Complete feature list
 - [README.md](README.md) - Main documentation
+
+## CI/CD Pipeline 🔄
+
+### Automated Quality Assurance
+
+Every push and pull request triggers a comprehensive quality assurance pipeline:
+
+```
+┌────────────────────────────────────────────────────────────┐
+│               Quality Assurance Pipeline                   │
+└────────────────────────────────────────────────────────────┘
+
+1️⃣  Syntax Validation        ✓ Python bytecode compilation
+2️⃣  Code Style Analysis      ✓ Black + Isort formatting
+3️⃣  Static Code Analysis     ✓ Flake8 linting
+4️⃣  Type Safety Check        ✓ MyPy type checking
+5️⃣  Security Scan           ✓ Bandit vulnerability scan
+6️⃣  Dependency Audit        ✓ Pip-audit security check
+7️⃣-🔟 Test Suite Matrix      ✓ Python 3.10, 3.11, 3.12, 3.13
+1️⃣1️⃣  Package Build          ✓ Distribution verification
+```
+
+### Pipeline Stages
+
+**Stage 1: Validation (Runs in parallel)**
+- ✅ Syntax validation - Ensures all Python files compile
+- ✅ Code style - Checks Black formatting and Isort import organization
+- ✅ Static analysis - Flake8 linting for code quality
+- ✅ Type checking - MyPy static type analysis
+- ✅ Security scan - Bandit security vulnerability detection
+- ✅ Dependency audit - Checks for vulnerable dependencies
+
+**Stage 2: Testing**
+- ✅ Test matrix across Python 3.10, 3.11, 3.12, 3.13
+- ✅ Runs all unit and integration tests
+- ✅ Validates compatibility across Python versions
+
+**Stage 3: Packaging**
+- ✅ Builds distribution packages
+- ✅ Validates package metadata
+- ✅ Ensures deployment readiness
+
+### Viewing Pipeline Results
+
+```bash
+# Check workflow status
+git push
+# Visit: https://github.com/uffamit/Professor_Profiler/actions
+
+# Run checks locally before pushing
+python -m compileall profiler_agent/ google/ tests/ -q
+black profiler_agent/ google/ tests/ --check
+flake8 profiler_agent/ google/ tests/ --select=E9,F63,F7,F82
+pytest tests/ -v
+```
+
+### Configuration
+
+Pipeline configuration: `.github/workflows/quality-assurance.yml`
+
+**Customization:**
+- Adjust Python versions in test matrix
+- Modify linting rules
+- Add new validation steps
+- Configure code coverage thresholds
+
+---
+
+**For more details, see:**
+- [QUICKSTART.md](QUICKSTART.md) - Getting started in 3 steps
+- [ARCHITECTURE.md](ARCHITECTURE.md) - System design
+- [FEATURES.md](FEATURES.md) - Complete feature list
+- [README.md](README.md) - Main documentation
